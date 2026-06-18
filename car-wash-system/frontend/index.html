@@ -3,405 +3,593 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Quản Lý Dịch Vụ</title>
+    <title>Hệ Thống Quản Lý Cửa Hàng Xe Máy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* ================= CẤU HÌNH BIẾN MÀU SẮC TỐI GIẢN ================= */
+        /* ================= CẤU HÌNH GIAO DIỆN ================= */
         :root {
-            --bg-body: #f8fafc;        /* Màu nền tổng thể sáng và sạch */
-            --bg-sidebar: #0f172a;     /* Màu thanh menu đen nhám sang trọng */
-            --bg-card: #ffffff;        /* Màu nền thẻ trắng tinh */
-            
-            --text-main: #334155;      /* Màu chữ chính (xám đậm, không dùng đen tuyền) */
-            --text-muted: #64748b;     /* Màu chữ phụ/tiêu đề con */
-            
-            --primary: #2563eb;        /* Xanh dương làm điểm nhấn chính */
-            --primary-hover: #1d4ed8;
-            --border: #e2e8f0;         /* Viền xám rất nhạt */
-            
-            --success-bg: #dcfce7; --success-text: #166534; /* Xanh lá cho trạng thái tốt */
-            --danger-bg: #fee2e2;  --danger-text: #991b1b;  /* Đỏ cho cảnh báo/xóa */
+            --sidebar-bg: #1e293b;
+            --sidebar-text: #94a3b8;
+            --sidebar-hover: #334155;
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --success: #10b981;
+            --danger: #ef4444;
+            --radius: 10px;
+            --transition: all 0.25s ease;
         }
 
-        /* ================= THIẾT LẬP CHUNG ================= */
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif; }
-        body { display: flex; background: var(--bg-body); color: var(--text-main); min-height: 100vh; line-height: 1.6; }
-        h2 { font-size: 24px; font-weight: 600; margin-bottom: 24px; color: var(--text-main); }
-        
-        /* ================= MÀN HÌNH ĐĂNG NHẬP ================= */
-        #login-screen { position: fixed; inset: 0; background: var(--bg-sidebar); display: flex; justify-content: center; align-items: center; z-index: 9999; }
-        .login-box { background: var(--bg-card); padding: 40px; border-radius: 12px; width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .login-box h2 { margin-bottom: 30px; text-align: center; color: var(--text-main); font-size: 22px; }
-        .login-box label { font-size: 14px; font-weight: 500; color: var(--text-muted); display: block; margin-bottom: 6px; }
-        
-        /* ================= THANH MENU (SIDEBAR) ================= */
-        #sidebar { width: 260px; background: var(--bg-sidebar); padding: 30px 0; display: none; flex-direction: column; border-right: 1px solid var(--border); }
-        #sidebar h2 { text-align: center; margin-bottom: 40px; font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 1px; }
-        #sidebar button { background: none; border: none; color: #94a3b8; padding: 14px 24px; text-align: left; width: 100%; font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent; }
-        #sidebar button:hover { background: rgba(255,255,255,0.05); color: #fff; }
-        #sidebar button.active { background: rgba(255,255,255,0.1); color: #fff; border-left-color: var(--primary); }
-        .btn-logout { margin-top: auto; color: #f87171 !important; }
-        .btn-logout:hover { background: rgba(239, 68, 68, 0.1) !important; color: #ef4444 !important; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); overflow: hidden; }
 
-        /* ================= KHU VỰC NỘI DUNG CHÍNH ================= */
-        #main-content { flex: 1; padding: 40px; display: none; overflow-y: auto; }
-        .page { display: none; animation: fadeIn 0.4s ease; }
-        .page.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .app-layout { display: flex; width: 100vw; height: 100vh; }
 
-        /* ================= FORM & THÀNH PHẦN ================= */
-        .card { background: var(--bg-card); padding: 30px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        
-        label { font-size: 14px; font-weight: 500; color: var(--text-main); display: block; margin-bottom: 6px; }
-        input, select, textarea { width: 100%; padding: 12px 16px; margin-bottom: 20px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; color: var(--text-main); background: #f8fafc; transition: all 0.2s; outline: none; }
-        input:focus, select:focus, textarea:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
-        
-        button.btn { background: var(--primary); color: white; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s; display: inline-block; }
-        button.btn:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); }
-        button.btn-danger { background: #ef4444; }
-        button.btn-danger:hover { background: #dc2626; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2); }
+        /* Sidebar */
+        .sidebar { width: 280px; background-color: var(--sidebar-bg); display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-header { padding: 30px 24px; font-size: 18px; font-weight: 700; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .sidebar-menu { display: flex; flex-direction: column; padding: 24px 16px; gap: 6px; flex: 1; overflow-y: auto; }
+        .menu-item { background: transparent; border: none; color: var(--sidebar-text); padding: 12px 18px; border-radius: 8px; font-size: 14px; font-weight: 500; text-align: left; cursor: pointer; transition: var(--transition); }
+        .menu-item:hover { background-color: var(--sidebar-hover); color: #fff; }
+        .menu-item.active { background-color: var(--primary-color); color: #fff; }
+        .sidebar-footer { padding: 20px 16px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .btn-logout { width: 100%; background-color: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.15); padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: var(--transition); }
+        .btn-logout:hover { background-color: var(--danger); color: white; }
 
-        /* ================= THỐNG KÊ DASHBOARD ================= */
-        .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 30px; }
-        .stat-card { background: var(--bg-card); padding: 24px; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: center; }
-        .stat-card h3 { color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 8px; }
-        .stat-card p { font-size: 36px; font-weight: 700; color: var(--text-main); line-height: 1; }
+        /* Main Workspace */
+        .main-workspace { flex: 1; overflow-y: auto; padding: 40px; position: relative; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .page-panel { display: none; }
+        .page-panel.active { display: block; animation: fadeInUp 0.4s ease forwards; }
 
-        /* ================= BẢNG DỮ LIỆU (TABLE) ================= */
-        .flex-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; }
-        .search-box { width: 350px; margin-bottom: 0; }
-        
-        .table-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .page-title-block { margin-bottom: 30px; }
+        .page-title-block h2 { font-size: 24px; font-weight: 700; }
+        .page-title-block p { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 20px; margin-bottom: 35px; }
+        .stat-card { background: var(--card-bg); border-radius: var(--radius); padding: 24px; border: 1px solid var(--border-color); }
+        .stat-label { font-size: 13px; color: var(--text-muted); text-transform: uppercase; }
+        .stat-value { font-size: 24px; font-weight: 700; margin-top: 8px; }
+
+        .table-box { background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--border-color); overflow: hidden; }
         table { width: 100%; border-collapse: collapse; text-align: left; }
-        th, td { padding: 16px 24px; border-bottom: 1px solid var(--border); }
-        th { background: #f8fafc; color: var(--text-muted); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-        td { font-size: 14px; color: var(--text-main); vertical-align: middle; }
-        tr:last-child td { border-bottom: none; }
-        tr:hover td { background-color: #f1f5f9; cursor: pointer; }
+        th, td { padding: 14px 20px; font-size: 14px; border-bottom: 1px solid var(--border-color); }
+        th { background-color: #f8fafc; font-weight: 600; color: var(--text-muted); text-transform: uppercase; font-size: 12px; }
 
-        /* Trạng thái Badge (Thay thế màu sắc loè loẹt) */
-        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-        .badge-available { background: var(--success-bg); color: var(--success-text); }
-        .badge-sold { background: var(--danger-bg); color: var(--danger-text); }
-
-        /* Phân trang */
-        .pagination { margin-top: 24px; display: flex; gap: 8px; justify-content: center; }
-        .pagination button { padding: 8px 16px; border: 1px solid var(--border); background: var(--bg-card); border-radius: 6px; font-size: 14px; font-weight: 500; color: var(--text-muted); cursor: pointer; transition: all 0.2s; }
-        .pagination button:hover { border-color: var(--primary); color: var(--primary); }
-        .pagination button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        /* Bike Grid */
+        .bike-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
+        .bike-card { background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--border-color); overflow: hidden; display: flex; flex-direction: column; transition: var(--transition); }
+        .bike-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .bike-img-wrapper { width: 100%; height: 180px; background-color: #f1f5f9; display: flex; align-items: center; justify-content: center; }
+        .bike-img-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+        .bike-info { padding: 20px; flex: 1; display: flex; flex-direction: column; }
+        .bike-meta { font-size: 13px; color: var(--text-muted); margin-bottom: 14px; }
+        .bike-price { font-size: 18px; font-weight: 700; color: var(--primary-color); margin-top: auto; margin-bottom: 15px; }
         
-        /* Form max-width */
-        .form-layout { max-width: 600px; }
+        .bike-actions { display: flex; gap: 8px; }
+        .bike-actions button { flex: 1; padding: 8px; font-size: 13px; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; transition: var(--transition); }
+        .btn-view { background-color: #f1f5f9; color: #334155; }
+        .btn-view:hover { background-color: #e2e8f0; }
+        .btn-edit { background-color: #e0e7ff; color: var(--primary-hover); }
+        .btn-edit:hover { background-color: var(--primary-color); color: #fff; }
+        .btn-del { background-color: #fee2e2; color: var(--danger); }
+        .btn-del:hover { background-color: var(--danger); color: #fff; }
+
+        .centered-container { max-width: 680px; margin: 0 auto; }
+        .form-card { background: var(--card-bg); border-radius: var(--radius); padding: 35px; border: 1px solid var(--border-color); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 13px; }
+        .form-control { width: 100%; padding: 11px 16px; border: 1px solid var(--border-color); border-radius: 8px; background-color: #f8fafc; outline: none; transition: 0.2s;}
+        .form-control:focus { border-color: var(--primary-color); background-color: #fff; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);}
+
+        .btn { background-color: var(--primary-color); color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .btn:hover { background-color: var(--primary-hover); }
+        .btn-outline { background-color: transparent; color: var(--text-main); border: 1px solid var(--border-color); }
+
+        .slide-panel { display: none; background: var(--card-bg); border-radius: var(--radius); padding: 30px; border: 1px solid var(--border-color); margin-bottom: 30px; }
+        .slide-panel.open { display: block; animation: fadeInUp 0.3s ease; }
+
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
+        .badge-success { background-color: #d1fae5; color: #065f46; }
+        .badge-danger { background-color: #fee2e2; color: #991b1b; }
+
+        .pagination { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
+        .pagination button { padding: 6px 12px; border: 1px solid var(--border-color); background: white; border-radius: 6px; cursor: pointer; }
+        .pagination button.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-overlay.open { display: flex; animation: fadeInUp 0.2s ease; }
+        .modal-content { background: #fff; width: 100%; max-width: 600px; border-radius: 12px; padding: 30px; position: relative; max-height: 90vh; overflow-y: auto;}
     </style>
 </head>
 <body>
 
-    <div id="login-screen">
-        <div class="login-box">
-            <h2>Đăng nhập hệ thống</h2>
-            <label>Tài khoản</label>
-            <input type="text" id="username" value="admin" autocomplete="off">
-            <label>Mật khẩu</label>
-            <input type="password" id="password" value="admin123">
-            <button class="btn" style="width: 100%; margin-top: 10px;" onclick="handleLogin()">Đăng nhập</button>
-        </div>
-    </div>
-
-    <div id="sidebar">
-        <h2>WORKSPACE</h2>
-        <button onclick="switchPage('dashboard')" id="nav-dashboard" class="active">Trang tổng quan</button>
-        <button onclick="switchPage('cars')" id="nav-cars">Quản lý xe</button>
-        <button onclick="switchPage('purchase')" id="nav-purchase">Hồ sơ mua xe</button>
-        <button onclick="switchPage('maintenance')" id="nav-maintenance">Lịch bảo dưỡng</button>
-        <button class="btn-logout" onclick="handleLogout()">Đăng xuất</button>
-    </div>
-
-    <div id="main-content">
+    <div class="app-layout">
         
-        <div id="page-dashboard" class="page active">
-            <h2>Tổng quan hệ thống</h2>
-            <div class="grid-stats">
-                <div class="stat-card"><h3>Tổng xe trong kho</h3><p id="stat-cars">0</p></div>
-                <div class="stat-card"><h3>Số lượng đã bán</h3><p id="stat-sales">0</p></div>
-                <div class="stat-card"><h3>Lượt bảo dưỡng</h3><p id="stat-services">0</p></div>
+        <aside class="sidebar">
+            <div class="sidebar-header">Cửa Hàng Xe Máy</div>
+            <nav class="sidebar-menu">
+                <button class="menu-item active" onclick="switchTab('dashboard')">Trang Tổng Quan</button>
+                <button class="menu-item" onclick="switchTab('bike-management')">Quản Lý Xe Máy</button>
+                <button class="menu-item" onclick="switchTab('purchase-profile')">Lập Hồ Sơ Mua Xe</button>
+                <button class="menu-item" onclick="switchTab('customer-management')">Quản Lý Khách Hàng</button>
+                <button class="menu-item" onclick="switchTab('maintenance-schedule')">Lịch Bảo Dưỡng</button>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="btn-logout" onclick="handleLogout()">Đăng Xuất</button>
             </div>
-            <div class="card">
-                <h3 style="font-size: 16px; margin-bottom: 8px;">Trạng thái vận hành</h3>
-                <p style="color: var(--text-muted); font-size: 14px;">Hệ thống kết nối cơ sở dữ liệu ổn định. Phiên làm việc của Admin đang được bảo mật.</p>
-            </div>
-        </div>
+        </aside>
 
-        <div id="page-cars" class="page">
-            <h2>Danh sách xe</h2>
-            <div class="flex-actions">
-                <input type="text" id="search-car" class="search-box" placeholder="Nhập tên xe để tìm kiếm..." oninput="loadCars()">
-                <button class="btn" onclick="showAddCarModal()">Thêm xe mới</button>
-            </div>
+        <main class="main-workspace">
             
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Mã</th>
-                            <th>Tên dòng xe</th>
-                            <th>Thương hiệu</th>
-                            <th>Giá niêm yết</th>
-                            <th>Năm SX</th>
-                            <th>Trạng thái</th>
-                            <th style="text-align: right;">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody id="car-table-body"></tbody>
-                </table>
+            <div id="dashboard" class="page-panel active">
+                <div class="page-title-block">
+                    <h2>Tổng Quan Hoạt Động</h2>
+                    <p>Báo cáo nhanh các chỉ số hoạt động kinh doanh</p>
+                </div>
+
+                <div class="form-card" style="margin-bottom: 24px; padding: 20px;">
+                    <div style="display: flex; gap: 15px; align-items: flex-end;">
+                        <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                            <label>Tìm doanh thu theo ngày</label>
+                            <input type="date" id="filter-date" class="form-control">
+                        </div>
+                        <button class="btn" onclick="filterRevenue()">Tra cứu</button>
+                        <button class="btn btn-outline" onclick="resetRevenueFilter()">Hôm nay</button>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Doanh thu <span id="revenue-label">(Hôm nay)</span></div>
+                        <div class="stat-value" id="dash-revenue">0 đ</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Xe máy trong kho</div>
+                        <div class="stat-value" id="dash-stock-count">0 chiếc</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Hồ sơ đã giao</div>
+                        <div class="stat-value" id="dash-profile-count">0 bộ</div>
+                    </div>
+                </div>
+
+                <div class="table-box">
+                    <div style="padding: 20px; font-weight: 600; border-bottom: 1px solid var(--border-color);">Giao Dịch Bán Xe Gần Đây</div>
+                    <table>
+                        <thead>
+                            <tr><th>Khách Hàng</th><th>Mẫu Xe Máy</th><th>Số Khung</th><th>Ngày Lập</th></tr>
+                        </thead>
+                        <tbody id="dash-recent-sales"></tbody>
+                    </table>
+                </div>
             </div>
-            <div class="pagination" id="car-pagination"></div>
 
-            <div id="car-detail-zone" class="card" style="margin-top: 30px; display: none;">
-                <h3 id="detail-title" style="font-size: 16px; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">Chi tiết xe</h3>
-                <div id="detail-content" style="font-size: 14px; color: var(--text-muted);"></div>
+            <div id="bike-management" class="page-panel">
+                <div class="page-title-block" style="display: flex; justify-content: space-between; align-items: flex-end;">
+                    <div>
+                        <h2>Quản Lý Xe Máy Trong Kho</h2>
+                        <p>Thêm, Sửa, Xóa và xem chi tiết thông tin các mẫu xe</p>
+                    </div>
+                    <button class="btn" onclick="openAddBikePanel()">Thêm Xe Máy Mới</button>
+                </div>
+
+                <div id="add-bike-panel" class="slide-panel">
+                    <h3 id="bike-form-title" style="margin-bottom: 20px; font-size: 16px; font-weight: 600;">Thêm Xe Mới</h3>
+                    <form id="bike-form" onsubmit="saveBike(event)">
+                        <input type="hidden" id="edit-bike-id" value="">
+                        
+                        <div class="form-group">
+                            <label>Đường Dẫn Link Ảnh (URL) - Hỗ trợ dán link .jpg, .png</label>
+                            <input type="text" id="bike-image" class="form-control" placeholder="Dán link ảnh vào đây để xem trước..." oninput="previewImage()" onchange="previewImage()">
+                            
+                            <div style="margin-top: 12px; height: 160px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 1px dashed #cbd5e1; overflow: hidden;">
+                                <img id="bike-image-preview" src="" style="max-height: 100%; max-width: 100%; object-fit: contain; border-radius: 8px;">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group"><label>Tên Mẫu Xe Máy</label><input type="text" id="bike-name" class="form-control" required></div>
+                            <div class="form-group"><label>Hãng Sản Xuất</label>
+                                <select id="bike-brand" class="form-control" required>
+                                    <option value="Honda">Honda</option><option value="Yamaha">Yamaha</option><option value="Suzuki">Suzuki</option><option value="Piaggio">Piaggio</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>Dung Tích (cc)</label><input type="text" id="bike-cc" class="form-control" required></div>
+                            <div class="form-group"><label>Màu Sắc</label><input type="text" id="bike-color" class="form-control" required></div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><label>Số Khung</label><input type="text" id="bike-frame" class="form-control" required></div>
+                            <div class="form-group"><label>Giá Bán (VND)</label><input type="number" id="bike-price" class="form-control" required></div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 15px;">
+                            <button type="button" class="btn btn-outline" onclick="closeBikePanel()">Hủy</button>
+                            <button type="submit" class="btn">Lưu Dữ Liệu</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="bike-grid" id="bike-list-container"></div>
             </div>
-        </div>
 
-        <div id="page-purchase" class="page">
-            <h2>Lập hồ sơ mua xe</h2>
-            <form id="purchase-form" class="card form-layout" onsubmit="submitPurchase(event)">
-                <label>Họ và Tên khách hàng</label>
-                <input type="text" id="p-name" required>
-                
-                <label>Số điện thoại liên hệ</label>
-                <input type="text" id="p-phone" required>
-                
-                <label>Số CCCD / Mã định danh</label>
-                <input type="text" id="p-idcard" required>
-                
-                <label>Chọn xe đăng ký mua</label>
-                <select id="p-car-select" required></select>
-                
-                <label>Phương thức thanh toán</label>
-                <select id="p-method">
-                    <option value="Trả thẳng (Tiền mặt/Chuyển khoản)">Trả thẳng toàn bộ</option>
-                    <option value="Trả góp qua Ngân hàng">Trả góp qua ngân hàng</option>
-                </select>
-                
-                <button type="submit" class="btn">Lưu hồ sơ</button>
-            </form>
-        </div>
+            <div id="purchase-profile" class="page-panel">
+                <div class="centered-container">
+                    <div class="page-title-block" style="text-align: center;"><h2>Lập Hồ Sơ Mua Xe</h2><p>Khởi tạo thông tin khách hàng và chốt đơn</p></div>
+                    <div class="form-card">
+                        <form id="purchase-form" onsubmit="submitPurchaseProfile(event)">
+                            <div class="form-group"><label>Họ Và Tên</label><input type="text" id="cust-name" class="form-control" required></div>
+                            <div class="form-row">
+                                <div class="form-group"><label>Số Điện Thoại</label><input type="tel" id="cust-phone" class="form-control" required></div>
+                                <div class="form-group"><label>Số CCCD</label><input type="text" id="cust-id" class="form-control" required></div>
+                            </div>
+                            <div class="form-group"><label>Chọn Xe Máy</label><select id="purchase-bike-select" class="form-control" required></select></div>
+                            <div class="form-group"><label>Phương Thức Thanh Toán</label>
+                                <select id="purchase-method" class="form-control">
+                                    <option value="Trả thẳng">Trả thẳng toàn bộ</option><option value="Trả góp">Trả góp qua ngân hàng</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 15px;">Xuất Hồ Sơ Bán Hàng</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
 
-        <div id="page-maintenance" class="page">
-            <h2>Đặt lịch dịch vụ bảo dưỡng</h2>
-            <form id="maintenance-form" class="card form-layout" onsubmit="submitMaintenance(event)">
-                <label>Biển kiểm soát</label>
-                <input type="text" id="m-plate" placeholder="VD: 30F-123.45" required>
-                
-                <label>Tên khách hàng</label>
-                <input type="text" id="m-name" required>
-                
-                <label>Số điện thoại</label>
-                <input type="text" id="m-phone" required>
-                
-                <label>Gói dịch vụ (Hệ thống 5+ dịch vụ chuẩn)</label>
-                <select id="m-service">
-                    <option value="Rửa xe bọt tuyết cao cấp">Rửa xe bọt tuyết cao cấp</option>
-                    <option value="Thay nhớt động cơ định kỳ">Thay nhớt động cơ định kỳ</option>
-                    <option value="Kiểm tra hệ thống phanh và lốp">Kiểm tra hệ thống phanh và lốp</option>
-                    <option value="Dọn vệ sinh chi tiết nội thất">Dọn vệ sinh chi tiết nội thất</option>
-                    <option value="Đánh bóng và phủ Ceramic vỏ xe">Đánh bóng và phủ Ceramic vỏ xe</option>
-                </select>
-                
-                <label>Thời gian hẹn lịch</label>
-                <input type="datetime-local" id="m-time" required>
-                
-                <label>Ghi chú bổ sung</label>
-                <textarea id="m-notes" rows="3" placeholder="Yêu cầu cụ thể từ khách hàng..."></textarea>
-                
-                <button type="submit" class="btn">Xác nhận đặt lịch</button>
-            </form>
+            <div id="customer-management" class="page-panel">
+                <div class="page-title-block"><h2>Danh Sách Khách Hàng</h2><p>Tra cứu thông tin và lịch sử mua hàng</p></div>
+                <div class="table-box" style="padding: 20px;">
+                    <input type="text" id="customer-search" class="form-control" placeholder="Tìm kiếm tên, SĐT..." oninput="searchCustomer()" style="margin-bottom: 20px; max-width: 400px;">
+                    <table>
+                        <thead><tr><th>Khách Hàng</th><th>Số Điện Thoại</th><th>Xe Đã Mua</th><th>Hình Thức</th><th>Hành Động</th></tr></thead>
+                        <tbody id="customer-table-body"></tbody>
+                    </table>
+                    <div class="pagination" id="customer-pagination"></div>
+                </div>
+            </div>
+
+            <div id="maintenance-schedule" class="page-panel">
+                <div class="centered-container">
+                    <div class="page-title-block" style="text-align: center;"><h2>Lịch Bảo Dưỡng Xe Máy</h2></div>
+                    <div class="form-card" style="margin-bottom: 30px;">
+                        <form id="maintenance-form" onsubmit="addMaintenance(event)">
+                            <div class="form-group"><label>Khách Hàng & Xe Máy</label><select id="maintain-profile-select" class="form-control" required></select></div>
+                            <div class="form-row">
+                                <div class="form-group"><label>Ngày Hẹn</label><input type="date" id="maintain-date" class="form-control" required></div>
+                                <div class="form-group"><label>Gói Dịch Vụ</label>
+                                    <select id="maintain-service" class="form-control">
+                                        <option value="Thay nhớt định kỳ">Thay nhớt định kỳ</option><option value="Bảo dưỡng 5000km">Bảo dưỡng 5000km</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn" style="width: 100%;">Tạo Lịch Hẹn</button>
+                        </form>
+                    </div>
+                    <div class="table-box">
+                        <table>
+                            <thead><tr><th>Khách Hàng</th><th>Mẫu Xe Máy</th><th>Ngày Hẹn</th><th>Dịch Vụ</th></tr></thead>
+                            <tbody id="maintenance-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <div id="general-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="modal-title" style="margin-bottom: 20px; font-size: 20px;">Chi Tiết</h3>
+            <div id="modal-body" style="font-size: 15px; line-height: 1.8;"></div>
+            <div style="text-align: right; margin-top: 25px;">
+                <button class="btn btn-outline" onclick="closeModal()">Đóng Cửa Sổ</button>
+            </div>
         </div>
     </div>
 
     <script>
-        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-            ? 'http://localhost:3000/api' 
-            : window.location.origin.replace('-8080.', '-3000.') + '/api';
+        // --- ẢNH DỰ PHÒNG KHÔNG GÂY LỖI SERVER ---
+        // Sử dụng mã hóa SVG tĩnh, không tạo request mạng nên chấm dứt hoàn toàn loop
+        const FALLBACK_IMG = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='200' viewBox='0 0 400 200'%3E%3Crect width='400' height='200' fill='%23f1f5f9'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='16' fill='%2364748b'%3EChưa có ảnh hợp lệ%3C/text%3E%3C/svg%3E";
 
-        let currentCarPage = 1;
+        const defaultBikes = [
+            { id: 1, name: 'Honda Vision 2026', brand: 'Honda', cc: '110cc', color: 'Xanh ngọc', frame: 'SK-VS-11', price: 34000000, img: 'https://cdn.honda.com.vn/motorcycles/December2022/bIqf9g0N2vLp6Lw5W0s8.png', status: 'Còn hàng' },
+            { id: 2, name: 'Yamaha Exciter 155', brand: 'Yamaha', cc: '155cc', color: 'Đen nhám', frame: 'SK-EX-22', price: 48000000, img: '', status: 'Còn hàng' }
+        ];
 
-        function handleLogin() {
-            const u = document.getElementById('username').value;
-            const p = document.getElementById('password').value;
-            
-            fetch(`${API_URL}/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: u, password: p })
-            })
-            .then(res => {
-                if(!res.ok) throw new Error("Thông tin đăng nhập không chính xác");
-                return res.json();
-            })
-            .then(data => {
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('sidebar').style.display = 'flex';
-                document.getElementById('main-content').style.display = 'block';
-                switchPage('dashboard');
-            })
-            .catch(err => alert(err.message));
+        const defaultProfiles = [
+            { id: 1, customer: 'Trần Minh Quang', phone: '0901234567', cccd: '001202001111', bikeName: 'Honda SH 150i', frame: 'SK-SH-99', paymentMethod: 'Trả thẳng', date: '2026-06-18', price: 95000000 }
+        ];
+
+        let initialBikes = JSON.parse(localStorage.getItem('myBikes')) || defaultBikes;
+        let soldProfiles = JSON.parse(localStorage.getItem('myProfiles')) || defaultProfiles;
+        let maintenanceList = JSON.parse(localStorage.getItem('myMaintenances')) || [];
+
+        function saveData() {
+            localStorage.setItem('myBikes', JSON.stringify(initialBikes));
+            localStorage.setItem('myProfiles', JSON.stringify(soldProfiles));
+            localStorage.setItem('myMaintenances', JSON.stringify(maintenanceList));
         }
 
-        function handleLogout() {
-            document.getElementById('login-screen').style.display = 'flex';
-            document.getElementById('sidebar').style.display = 'none';
-            document.getElementById('main-content').style.display = 'none';
-            document.getElementById('password').value = '';
-        }
+        let currentEditBikeId = null; 
+        let customerCurrentPage = 1;
+        const customerItemsPerPage = 5;
 
-        function switchPage(pageId) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('#sidebar button').forEach(b => b.classList.remove('active'));
-            
-            document.getElementById(`page-${pageId}`).classList.add('active');
-            document.getElementById(`nav-${pageId}`).classList.add('active');
+        function switchTab(tabId) {
+            document.querySelectorAll('.page-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
 
-            if(pageId === 'dashboard') loadDashboardStats();
-            if(pageId === 'cars') loadCars();
-            if(pageId === 'purchase') loadCarSelectOptions();
-        }
-
-        function loadDashboardStats() {
-            fetch(`${API_URL}/dashboard/stats`)
-                .then(res => res.json())
-                .then(data => {
-                    document.getElementById('stat-cars').innerText = data.carsCount;
-                    document.getElementById('stat-sales').innerText = data.salesCount;
-                    document.getElementById('stat-services').innerText = data.servicesCount;
-                }).catch(e => console.log(e));
-        }
-
-        function loadCars() {
-            const search = document.getElementById('search-car').value;
-            fetch(`${API_URL}/cars?search=${search}&page=${currentCarPage}`)
-                .then(res => res.json())
-                .then(data => {
-                    const tbody = document.getElementById('car-table-body');
-                    tbody.innerHTML = '';
-                    data.cars.forEach(car => {
-                        const badgeClass = car.status === 'Còn hàng' ? 'badge-available' : 'badge-sold';
-                        tbody.innerHTML += `
-                            <tr onclick="viewCarDetail(${car.id})">
-                                <td style="color: var(--text-muted);">#${car.id}</td>
-                                <td style="font-weight: 500; color: var(--text-main);">${car.name}</td>
-                                <td>${car.brand}</td>
-                                <td>${parseInt(car.price).toLocaleString()} VNĐ</td>
-                                <td>${car.year}</td>
-                                <td><span class="badge ${badgeClass}">${car.status}</span></td>
-                                <td style="text-align: right;">
-                                    <button class="btn btn-danger" style="padding: 6px 12px; font-size: 13px;" onclick="event.stopPropagation(); deleteCar(${car.id})">Xóa</button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-
-                    const pagZone = document.getElementById('car-pagination');
-                    pagZone.innerHTML = '';
-                    for(let i=1; i<=data.totalPages; i++) {
-                        pagZone.innerHTML += `<button class="${i===data.currentPage?'active':''}" onclick="currentCarPage=${i}; loadCars();">${i}</button>`;
-                    }
-                }).catch(e => console.log(e));
-        }
-
-        function viewCarDetail(id) {
-            fetch(`${API_URL}/cars/${id}`)
-                .then(res => res.json())
-                .then(car => {
-                    const zone = document.getElementById('car-detail-zone');
-                    zone.style.display = 'block';
-                    const badgeClass = car.status === 'Còn hàng' ? 'badge-available' : 'badge-sold';
-                    document.getElementById('detail-title').innerText = `Thông số chi tiết: ${car.name}`;
-                    document.getElementById('detail-content').innerHTML = `
-                        <p style="margin-bottom: 8px;"><strong>Hãng sản xuất:</strong> ${car.brand}</p>
-                        <p style="margin-bottom: 8px;"><strong>Năm sản xuất:</strong> ${car.year}</p>
-                        <p style="margin-bottom: 8px;"><strong>Giá bán cơ sở:</strong> ${parseInt(car.price).toLocaleString()} VNĐ</p>
-                        <p><strong>Trạng thái hệ thống:</strong> <span class="badge ${badgeClass}" style="margin-left: 8px;">${car.status}</span></p>
-                    `;
-                });
-        }
-
-        function showAddCarModal() {
-            const name = prompt("Nhập tên dòng xe:"); if(!name) return;
-            const brand = prompt("Nhập thương hiệu:");
-            const price = prompt("Nhập giá niêm yết (VND):");
-            const year = prompt("Nhập năm sản xuất:");
-
-            fetch(`${API_URL}/cars`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, brand, price: Number(price), year: Number(year) })
-            }).then(() => loadCars());
-        }
-
-        function deleteCar(id) {
-            if(confirm("Xác nhận xóa dữ liệu xe này khỏi hệ thống?")) {
-                fetch(`${API_URL}/cars/${id}`, { method: 'DELETE' }).then(() => loadCars());
+            if (tabId === 'dashboard') updateDashboardMetrics();
+            if (tabId === 'bike-management') renderBikeGrid();
+            if (tabId === 'purchase-profile') populatePurchaseDropdown();
+            if (tabId === 'customer-management') renderCustomerList();
+            if (tabId === 'maintenance-schedule') {
+                populateMaintenanceDropdown();
+                renderMaintenanceTable();
             }
         }
 
-        function loadCarSelectOptions() {
-            fetch(`${API_URL}/cars?page=1`)
-                .then(res => res.json())
-                .then(data => {
-                    const select = document.getElementById('p-car-select');
-                    select.innerHTML = '';
-                    data.cars.filter(c => c.status === 'Còn hàng').forEach(car => {
-                        select.innerHTML += `<option value="${car.id}">${car.name} - ${parseInt(car.price).toLocaleString()} VNĐ</option>`;
-                    });
-                });
+        function updateDashboardMetrics(filterDate = null) {
+            let totalRev = 0;
+            const table = document.getElementById('dash-recent-sales');
+            table.innerHTML = '';
+            soldProfiles.forEach(p => {
+                if(filterDate && p.date !== filterDate) return;
+                totalRev += p.price;
+                table.innerHTML += `<tr><td>${p.customer}</td><td>${p.bikeName}</td><td>${p.frame}</td><td>${p.date}</td></tr>`;
+            });
+            document.getElementById('dash-revenue').innerText = totalRev.toLocaleString('vi-VN') + ' đ';
+            document.getElementById('dash-stock-count').innerText = initialBikes.filter(b => b.status === 'Còn hàng').length + ' chiếc';
+            document.getElementById('dash-profile-count').innerText = soldProfiles.length + ' bộ';
         }
 
-        function submitPurchase(e) {
-            e.preventDefault();
-            const body = {
-                customer_name: document.getElementById('p-name').value,
-                phone: document.getElementById('p-phone').value,
-                id_card: document.getElementById('p-idcard').value,
-                car_id: document.getElementById('p-car-select').value,
-                payment_method: document.getElementById('p-method').value
-            };
+        function filterRevenue() {
+            const d = document.getElementById('filter-date').value;
+            if(d) { document.getElementById('revenue-label').innerText = `(Ngày ${d})`; updateDashboardMetrics(d); }
+        }
+        function resetRevenueFilter() {
+            document.getElementById('filter-date').value = ''; document.getElementById('revenue-label').innerText = '(Tổng cộng)'; updateDashboardMetrics();
+        }
 
-            fetch(`${API_URL}/purchases`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            })
-            .then(res => res.json())
-            .then(data => {
-                alert(data.message);
-                document.getElementById('purchase-form').reset();
-                switchPage('dashboard');
+        function previewImage() {
+            let url = document.getElementById('bike-image').value.trim();
+            // Lọc các lỗi copy dính khoảng trắng hoặc ký tự rác
+            if (url && !url.startsWith('http')) {
+                url = ''; // Bỏ qua nếu link không hợp lệ
+            }
+            const preview = document.getElementById('bike-image-preview');
+            preview.src = url ? url : FALLBACK_IMG;
+            // Chốt chặn this.onerror = null cắt đứt loop
+            preview.onerror = function() {
+                this.onerror = null; 
+                this.src = FALLBACK_IMG;
+            };
+        }
+
+        function openAddBikePanel() {
+            document.getElementById('add-bike-panel').classList.add('open');
+            document.getElementById('bike-form').reset();
+            document.getElementById('bike-form-title').innerText = "Thêm Xe Mới";
+            currentEditBikeId = null;
+            previewImage(); 
+        }
+        function closeBikePanel() { document.getElementById('add-bike-panel').classList.remove('open'); }
+
+        function renderBikeGrid() {
+            const container = document.getElementById('bike-list-container');
+            container.innerHTML = '';
+            initialBikes.forEach(bike => {
+                const badge = bike.status === 'Còn hàng' ? '<span class="badge badge-success">Còn hàng</span>' : '<span class="badge badge-danger">Đã bán</span>';
+                const price = bike.price.toLocaleString('vi-VN') + ' đ';
+                const imgSrc = (bike.img && bike.img.startsWith('http')) ? bike.img : FALLBACK_IMG;
+
+                // onerror được gán this.onerror=null để chặn vòng lặp
+                container.innerHTML += `
+                    <div class="bike-card">
+                        <div class="bike-img-wrapper"><img src="${imgSrc}" onerror="this.onerror=null; this.src='${FALLBACK_IMG}';"></div>
+                        <div class="bike-info">
+                            <div style="display:flex; justify-content:space-between;"><h3 style="font-size:16px;">${bike.name}</h3>${badge}</div>
+                            <div class="bike-meta">Hãng: ${bike.brand} | Khung: ${bike.frame}</div>
+                            <div class="bike-price">${price}</div>
+                            <div class="bike-actions" style="margin-bottom: 8px;">
+                                <button class="btn-view" style="width: 100%;" onclick="viewBikeDetail(${bike.id})">Xem Chi Tiết Xe</button>
+                            </div>
+                            <div class="bike-actions">
+                                <button class="btn-edit" onclick="editBike(${bike.id})" ${bike.status==='Đã bán'?'disabled':''}>Sửa</button>
+                                <button class="btn-del" onclick="deleteBike(${bike.id})">Xóa</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
             });
         }
 
-        function submitMaintenance(e) {
+        function saveBike(e) {
             e.preventDefault();
-            const body = {
-                plate_number: document.getElementById('m-plate').value,
-                customer_name: document.getElementById('m-name').value,
-                phone: document.getElementById('m-phone').value,
-                service_type: document.getElementById('m-service').value,
-                appointment_time: document.getElementById('m-time').value,
-                notes: document.getElementById('m-notes').value
-            };
+            const name = document.getElementById('bike-name').value; const brand = document.getElementById('bike-brand').value;
+            const cc = document.getElementById('bike-cc').value; const color = document.getElementById('bike-color').value;
+            const frame = document.getElementById('bike-frame').value; const price = parseInt(document.getElementById('bike-price').value);
+            const img = document.getElementById('bike-image').value.trim();
 
-            fetch(`${API_URL}/maintenance`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            })
-            .then(res => res.json())
-            .then(data => {
-                alert(data.message);
-                document.getElementById('maintenance-form').reset();
-                switchPage('dashboard');
+            if(currentEditBikeId) {
+                const idx = initialBikes.findIndex(b => b.id === currentEditBikeId);
+                initialBikes[idx] = { ...initialBikes[idx], name, brand, cc, color, frame, price, img };
+                alert("Cập nhật thành công!");
+            } else {
+                initialBikes.unshift({ id: Date.now(), name, brand, cc, color, frame, price, img, status: 'Còn hàng' });
+                alert("Thêm xe thành công!");
+            }
+            saveData();
+            closeBikePanel(); renderBikeGrid();
+        }
+
+        function editBike(id) {
+            const b = initialBikes.find(x => x.id === id);
+            if(b) {
+                openAddBikePanel(); document.getElementById('bike-form-title').innerText = "Sửa Thông Tin Xe"; currentEditBikeId = id;
+                document.getElementById('bike-name').value = b.name; document.getElementById('bike-brand').value = b.brand;
+                document.getElementById('bike-cc').value = b.cc; document.getElementById('bike-color').value = b.color;
+                document.getElementById('bike-frame').value = b.frame; document.getElementById('bike-price').value = b.price;
+                document.getElementById('bike-image').value = b.img;
+                previewImage(); 
+            }
+        }
+
+        function deleteBike(id) {
+            if(confirm("Bạn có chắc chắn muốn xóa xe này khỏi kho?")) { 
+                initialBikes = initialBikes.filter(b => b.id !== id); 
+                saveData(); 
+                renderBikeGrid(); 
+            }
+        }
+
+        function openModal(title, htmlContent) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-body').innerHTML = htmlContent;
+            document.getElementById('general-modal').classList.add('open');
+        }
+        function closeModal() { document.getElementById('general-modal').classList.remove('open'); }
+
+        function viewBikeDetail(id) {
+            const b = initialBikes.find(x => x.id === id);
+            if(!b) return;
+            const imgSrc = (b.img && b.img.startsWith('http')) ? b.img : FALLBACK_IMG;
+            
+            const html = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <img src="${imgSrc}" onerror="this.onerror=null; this.src='${FALLBACK_IMG}';" style="max-width: 100%; height: 250px; object-fit: contain; border-radius: 8px;">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div><strong>Tên xe:</strong> ${b.name}</div>
+                    <div><strong>Hãng sản xuất:</strong> ${b.brand}</div>
+                    <div><strong>Phân khối:</strong> ${b.cc}</div>
+                    <div><strong>Màu sắc:</strong> ${b.color}</div>
+                    <div><strong>Số khung:</strong> ${b.frame}</div>
+                    <div><strong>Tình trạng:</strong> <span style="color: ${b.status==='Còn hàng'?'var(--success)':'var(--danger)'}">${b.status}</span></div>
+                </div>
+                <div style="margin-top: 15px; font-size: 18px; font-weight: 700; color: var(--primary-color);">
+                    Giá bán: ${b.price.toLocaleString('vi-VN')} VNĐ
+                </div>
+            `;
+            openModal('Chi Tiết Thông Số Xe', html);
+        }
+
+        function viewCustomerDetail(id) {
+            const p = soldProfiles.find(x => x.id === id);
+            if(!p) return;
+            const html = `
+                <strong>Tên KH:</strong> ${p.customer} <br>
+                <strong>SĐT:</strong> ${p.phone} &nbsp;|&nbsp; <strong>CCCD:</strong> ${p.cccd} <br>
+                <hr style="margin: 15px 0; border: 0; border-top: 1px dashed #cbd5e1;">
+                <strong>Xe Đã Mua:</strong> ${p.bikeName} <br>
+                <strong>Số Khung:</strong> ${p.frame} <br>
+                <strong>Ngày Mua:</strong> ${p.date} <br>
+                <strong>Giá Trị Giao Dịch:</strong> ${p.price.toLocaleString('vi-VN')} đ <br>
+                <strong>Thanh Toán:</strong> <span style="color:var(--primary-color);font-weight:600;">${p.paymentMethod}</span>
+            `;
+            openModal('Hồ Sơ Khách Hàng', html);
+        }
+
+        function populatePurchaseDropdown() {
+            const select = document.getElementById('purchase-bike-select'); select.innerHTML = '';
+            const available = initialBikes.filter(b => b.status === 'Còn hàng');
+            if(available.length === 0) { select.innerHTML = '<option value="">Hết xe trong kho</option>'; return; }
+            available.forEach(b => { select.innerHTML += `<option value="${b.id}">${b.name} (${b.price.toLocaleString()}đ)</option>`; });
+        }
+
+        function submitPurchaseProfile(e) {
+            e.preventDefault();
+            const bikeId = parseInt(document.getElementById('purchase-bike-select').value);
+            const b = initialBikes.find(x => x.id === bikeId);
+            if(!b) return alert('Chưa chọn xe');
+            
+            b.status = 'Đã bán'; 
+            soldProfiles.unshift({
+                id: Date.now(), customer: document.getElementById('cust-name').value, phone: document.getElementById('cust-phone').value,
+                cccd: document.getElementById('cust-id').value, bikeName: b.name, frame: b.frame, paymentMethod: document.getElementById('purchase-method').value,
+                price: b.price, date: new Date().toISOString().split('T')[0]
+            });
+            
+            saveData(); 
+            alert("Xuất hồ sơ và bán xe thành công!"); 
+            document.getElementById('purchase-form').reset(); 
+            switchTab('dashboard');
+        }
+
+        function renderCustomerList() {
+            const query = document.getElementById('customer-search').value.toLowerCase();
+            let filtered = soldProfiles.filter(p => p.customer.toLowerCase().includes(query) || p.phone.includes(query));
+            const totalPages = Math.ceil(filtered.length / customerItemsPerPage);
+            if(customerCurrentPage > totalPages) customerCurrentPage = totalPages || 1;
+            const start = (customerCurrentPage - 1) * customerItemsPerPage;
+            const paginatedData = filtered.slice(start, start + customerItemsPerPage);
+
+            const tbody = document.getElementById('customer-table-body'); tbody.innerHTML = '';
+            if(paginatedData.length === 0) tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Không tìm thấy.</td></tr>`;
+            
+            paginatedData.forEach(p => {
+                const methodColor = p.paymentMethod === 'Trả góp' ? 'color:#d97706;' : 'color:#059669;';
+                tbody.innerHTML += `<tr>
+                    <td style="font-weight: 500;">${p.customer}</td><td>${p.phone}</td><td>${p.bikeName}</td>
+                    <td style="${methodColor} font-weight:600;">${p.paymentMethod}</td>
+                    <td><button class="btn btn-outline" style="padding: 6px 12px;" onclick="viewCustomerDetail(${p.id})">Chi Tiết</button></td>
+                </tr>`;
+            });
+
+            const pagContainer = document.getElementById('customer-pagination'); pagContainer.innerHTML = '';
+            for(let i=1; i<=totalPages; i++) {
+                pagContainer.innerHTML += `<button class="${i===customerCurrentPage?'active':''}" onclick="goToCustomerPage(${i})">${i}</button>`;
+            }
+        }
+
+        function searchCustomer() { customerCurrentPage = 1; renderCustomerList(); }
+        function goToCustomerPage(page) { customerCurrentPage = page; renderCustomerList(); }
+
+        function populateMaintenanceDropdown() {
+            const select = document.getElementById('maintain-profile-select'); select.innerHTML = '';
+            soldProfiles.forEach(p => { select.innerHTML += `<option value="${p.id}">${p.customer} - Xe: ${p.bikeName}</option>`; });
+        }
+
+        function renderMaintenanceTable() {
+            const tbody = document.getElementById('maintenance-table-body');
+            tbody.innerHTML = '';
+            maintenanceList.forEach(m => {
+                tbody.innerHTML += `<tr>
+                    <td>${m.customer}</td><td>${m.bikeName}</td>
+                    <td>${m.date}</td><td>${m.service}</td>
+                </tr>`;
             });
         }
+
+        function addMaintenance(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('maintain-profile-select').value);
+            const p = soldProfiles.find(x => x.id === id);
+            
+            maintenanceList.unshift({
+                customer: p.customer,
+                bikeName: p.bikeName,
+                date: document.getElementById('maintain-date').value,
+                service: document.getElementById('maintain-service').value
+            });
+
+            saveData(); 
+            renderMaintenanceTable();
+            alert('Lên lịch hẹn bảo dưỡng thành công!'); 
+            document.getElementById('maintenance-form').reset();
+        }
+
+        function handleLogout() { if(confirm("Thoát hệ thống?")) alert("Đã đăng xuất!"); }
+
+        updateDashboardMetrics();
     </script>
 </body>
 </html>
