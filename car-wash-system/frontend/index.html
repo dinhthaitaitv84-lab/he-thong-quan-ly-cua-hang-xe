@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Quản Lý Dịch Vụ</title>
+    <style>
+        /* ================= CẤU HÌNH BIẾN MÀU SẮC TỐI GIẢN ================= */
+        :root {
+            --bg-body: #f8fafc;        /* Màu nền tổng thể sáng và sạch */
+            --bg-sidebar: #0f172a;     /* Màu thanh menu đen nhám sang trọng */
+            --bg-card: #ffffff;        /* Màu nền thẻ trắng tinh */
+            
+            --text-main: #334155;      /* Màu chữ chính (xám đậm, không dùng đen tuyền) */
+            --text-muted: #64748b;     /* Màu chữ phụ/tiêu đề con */
+            
+            --primary: #2563eb;        /* Xanh dương làm điểm nhấn chính */
+            --primary-hover: #1d4ed8;
+            --border: #e2e8f0;         /* Viền xám rất nhạt */
+            
+            --success-bg: #dcfce7; --success-text: #166534; /* Xanh lá cho trạng thái tốt */
+            --danger-bg: #fee2e2;  --danger-text: #991b1b;  /* Đỏ cho cảnh báo/xóa */
+        }
+
+        /* ================= THIẾT LẬP CHUNG ================= */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif; }
+        body { display: flex; background: var(--bg-body); color: var(--text-main); min-height: 100vh; line-height: 1.6; }
+        h2 { font-size: 24px; font-weight: 600; margin-bottom: 24px; color: var(--text-main); }
+        
+        /* ================= MÀN HÌNH ĐĂNG NHẬP ================= */
+        #login-screen { position: fixed; inset: 0; background: var(--bg-sidebar); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .login-box { background: var(--bg-card); padding: 40px; border-radius: 12px; width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .login-box h2 { margin-bottom: 30px; text-align: center; color: var(--text-main); font-size: 22px; }
+        .login-box label { font-size: 14px; font-weight: 500; color: var(--text-muted); display: block; margin-bottom: 6px; }
+        
+        /* ================= THANH MENU (SIDEBAR) ================= */
+        #sidebar { width: 260px; background: var(--bg-sidebar); padding: 30px 0; display: none; flex-direction: column; border-right: 1px solid var(--border); }
+        #sidebar h2 { text-align: center; margin-bottom: 40px; font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 1px; }
+        #sidebar button { background: none; border: none; color: #94a3b8; padding: 14px 24px; text-align: left; width: 100%; font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent; }
+        #sidebar button:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        #sidebar button.active { background: rgba(255,255,255,0.1); color: #fff; border-left-color: var(--primary); }
+        .btn-logout { margin-top: auto; color: #f87171 !important; }
+        .btn-logout:hover { background: rgba(239, 68, 68, 0.1) !important; color: #ef4444 !important; }
+
+        /* ================= KHU VỰC NỘI DUNG CHÍNH ================= */
+        #main-content { flex: 1; padding: 40px; display: none; overflow-y: auto; }
+        .page { display: none; animation: fadeIn 0.4s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ================= FORM & THÀNH PHẦN ================= */
+        .card { background: var(--bg-card); padding: 30px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        
+        label { font-size: 14px; font-weight: 500; color: var(--text-main); display: block; margin-bottom: 6px; }
+        input, select, textarea { width: 100%; padding: 12px 16px; margin-bottom: 20px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; color: var(--text-main); background: #f8fafc; transition: all 0.2s; outline: none; }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        
+        button.btn { background: var(--primary); color: white; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s; display: inline-block; }
+        button.btn:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); }
+        button.btn-danger { background: #ef4444; }
+        button.btn-danger:hover { background: #dc2626; box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2); }
+
+        /* ================= THỐNG KÊ DASHBOARD ================= */
+        .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 30px; }
+        .stat-card { background: var(--bg-card); padding: 24px; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: center; }
+        .stat-card h3 { color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 8px; }
+        .stat-card p { font-size: 36px; font-weight: 700; color: var(--text-main); line-height: 1; }
+
+        /* ================= BẢNG DỮ LIỆU (TABLE) ================= */
+        .flex-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; }
+        .search-box { width: 350px; margin-bottom: 0; }
+        
+        .table-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 16px 24px; border-bottom: 1px solid var(--border); }
+        th { background: #f8fafc; color: var(--text-muted); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { font-size: 14px; color: var(--text-main); vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background-color: #f1f5f9; cursor: pointer; }
+
+        /* Trạng thái Badge (Thay thế màu sắc loè loẹt) */
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .badge-available { background: var(--success-bg); color: var(--success-text); }
+        .badge-sold { background: var(--danger-bg); color: var(--danger-text); }
+
+        /* Phân trang */
+        .pagination { margin-top: 24px; display: flex; gap: 8px; justify-content: center; }
+        .pagination button { padding: 8px 16px; border: 1px solid var(--border); background: var(--bg-card); border-radius: 6px; font-size: 14px; font-weight: 500; color: var(--text-muted); cursor: pointer; transition: all 0.2s; }
+        .pagination button:hover { border-color: var(--primary); color: var(--primary); }
+        .pagination button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        
+        /* Form max-width */
+        .form-layout { max-width: 600px; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <div class="login-box">
+            <h2>Đăng nhập hệ thống</h2>
+            <label>Tài khoản</label>
+            <input type="text" id="username" value="admin" autocomplete="off">
+            <label>Mật khẩu</label>
+            <input type="password" id="password" value="admin123">
+            <button class="btn" style="width: 100%; margin-top: 10px;" onclick="handleLogin()">Đăng nhập</button>
+        </div>
+    </div>
+
+    <div id="sidebar">
+        <h2>WORKSPACE</h2>
+        <button onclick="switchPage('dashboard')" id="nav-dashboard" class="active">Trang tổng quan</button>
+        <button onclick="switchPage('cars')" id="nav-cars">Quản lý xe</button>
+        <button onclick="switchPage('purchase')" id="nav-purchase">Hồ sơ mua xe</button>
+        <button onclick="switchPage('maintenance')" id="nav-maintenance">Lịch bảo dưỡng</button>
+        <button class="btn-logout" onclick="handleLogout()">Đăng xuất</button>
+    </div>
+
+    <div id="main-content">
+        
+        <div id="page-dashboard" class="page active">
+            <h2>Tổng quan hệ thống</h2>
+            <div class="grid-stats">
+                <div class="stat-card"><h3>Tổng xe trong kho</h3><p id="stat-cars">0</p></div>
+                <div class="stat-card"><h3>Số lượng đã bán</h3><p id="stat-sales">0</p></div>
+                <div class="stat-card"><h3>Lượt bảo dưỡng</h3><p id="stat-services">0</p></div>
+            </div>
+            <div class="card">
+                <h3 style="font-size: 16px; margin-bottom: 8px;">Trạng thái vận hành</h3>
+                <p style="color: var(--text-muted); font-size: 14px;">Hệ thống kết nối cơ sở dữ liệu ổn định. Phiên làm việc của Admin đang được bảo mật.</p>
+            </div>
+        </div>
+
+        <div id="page-cars" class="page">
+            <h2>Danh sách xe</h2>
+            <div class="flex-actions">
+                <input type="text" id="search-car" class="search-box" placeholder="Nhập tên xe để tìm kiếm..." oninput="loadCars()">
+                <button class="btn" onclick="showAddCarModal()">Thêm xe mới</button>
+            </div>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Mã</th>
+                            <th>Tên dòng xe</th>
+                            <th>Thương hiệu</th>
+                            <th>Giá niêm yết</th>
+                            <th>Năm SX</th>
+                            <th>Trạng thái</th>
+                            <th style="text-align: right;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="car-table-body"></tbody>
+                </table>
+            </div>
+            <div class="pagination" id="car-pagination"></div>
+
+            <div id="car-detail-zone" class="card" style="margin-top: 30px; display: none;">
+                <h3 id="detail-title" style="font-size: 16px; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">Chi tiết xe</h3>
+                <div id="detail-content" style="font-size: 14px; color: var(--text-muted);"></div>
+            </div>
+        </div>
+
+        <div id="page-purchase" class="page">
+            <h2>Lập hồ sơ mua xe</h2>
+            <form id="purchase-form" class="card form-layout" onsubmit="submitPurchase(event)">
+                <label>Họ và Tên khách hàng</label>
+                <input type="text" id="p-name" required>
+                
+                <label>Số điện thoại liên hệ</label>
+                <input type="text" id="p-phone" required>
+                
+                <label>Số CCCD / Mã định danh</label>
+                <input type="text" id="p-idcard" required>
+                
+                <label>Chọn xe đăng ký mua</label>
+                <select id="p-car-select" required></select>
+                
+                <label>Phương thức thanh toán</label>
+                <select id="p-method">
+                    <option value="Trả thẳng (Tiền mặt/Chuyển khoản)">Trả thẳng toàn bộ</option>
+                    <option value="Trả góp qua Ngân hàng">Trả góp qua ngân hàng</option>
+                </select>
+                
+                <button type="submit" class="btn">Lưu hồ sơ</button>
+            </form>
+        </div>
+
+        <div id="page-maintenance" class="page">
+            <h2>Đặt lịch dịch vụ bảo dưỡng</h2>
+            <form id="maintenance-form" class="card form-layout" onsubmit="submitMaintenance(event)">
+                <label>Biển kiểm soát</label>
+                <input type="text" id="m-plate" placeholder="VD: 30F-123.45" required>
+                
+                <label>Tên khách hàng</label>
+                <input type="text" id="m-name" required>
+                
+                <label>Số điện thoại</label>
+                <input type="text" id="m-phone" required>
+                
+                <label>Gói dịch vụ (Hệ thống 5+ dịch vụ chuẩn)</label>
+                <select id="m-service">
+                    <option value="Rửa xe bọt tuyết cao cấp">Rửa xe bọt tuyết cao cấp</option>
+                    <option value="Thay nhớt động cơ định kỳ">Thay nhớt động cơ định kỳ</option>
+                    <option value="Kiểm tra hệ thống phanh và lốp">Kiểm tra hệ thống phanh và lốp</option>
+                    <option value="Dọn vệ sinh chi tiết nội thất">Dọn vệ sinh chi tiết nội thất</option>
+                    <option value="Đánh bóng và phủ Ceramic vỏ xe">Đánh bóng và phủ Ceramic vỏ xe</option>
+                </select>
+                
+                <label>Thời gian hẹn lịch</label>
+                <input type="datetime-local" id="m-time" required>
+                
+                <label>Ghi chú bổ sung</label>
+                <textarea id="m-notes" rows="3" placeholder="Yêu cầu cụ thể từ khách hàng..."></textarea>
+                
+                <button type="submit" class="btn">Xác nhận đặt lịch</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? 'http://localhost:3000/api' 
+            : window.location.origin.replace('-8080.', '-3000.') + '/api';
+
+        let currentCarPage = 1;
+
+        function handleLogin() {
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            
+            fetch(`${API_URL}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: u, password: p })
+            })
+            .then(res => {
+                if(!res.ok) throw new Error("Thông tin đăng nhập không chính xác");
+                return res.json();
+            })
+            .then(data => {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('sidebar').style.display = 'flex';
+                document.getElementById('main-content').style.display = 'block';
+                switchPage('dashboard');
+            })
+            .catch(err => alert(err.message));
+        }
+
+        function handleLogout() {
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('sidebar').style.display = 'none';
+            document.getElementById('main-content').style.display = 'none';
+            document.getElementById('password').value = '';
+        }
+
+        function switchPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('#sidebar button').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(`page-${pageId}`).classList.add('active');
+            document.getElementById(`nav-${pageId}`).classList.add('active');
+
+            if(pageId === 'dashboard') loadDashboardStats();
+            if(pageId === 'cars') loadCars();
+            if(pageId === 'purchase') loadCarSelectOptions();
+        }
+
+        function loadDashboardStats() {
+            fetch(`${API_URL}/dashboard/stats`)
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('stat-cars').innerText = data.carsCount;
+                    document.getElementById('stat-sales').innerText = data.salesCount;
+                    document.getElementById('stat-services').innerText = data.servicesCount;
+                }).catch(e => console.log(e));
+        }
+
+        function loadCars() {
+            const search = document.getElementById('search-car').value;
+            fetch(`${API_URL}/cars?search=${search}&page=${currentCarPage}`)
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.getElementById('car-table-body');
+                    tbody.innerHTML = '';
+                    data.cars.forEach(car => {
+                        const badgeClass = car.status === 'Còn hàng' ? 'badge-available' : 'badge-sold';
+                        tbody.innerHTML += `
+                            <tr onclick="viewCarDetail(${car.id})">
+                                <td style="color: var(--text-muted);">#${car.id}</td>
+                                <td style="font-weight: 500; color: var(--text-main);">${car.name}</td>
+                                <td>${car.brand}</td>
+                                <td>${parseInt(car.price).toLocaleString()} VNĐ</td>
+                                <td>${car.year}</td>
+                                <td><span class="badge ${badgeClass}">${car.status}</span></td>
+                                <td style="text-align: right;">
+                                    <button class="btn btn-danger" style="padding: 6px 12px; font-size: 13px;" onclick="event.stopPropagation(); deleteCar(${car.id})">Xóa</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+
+                    const pagZone = document.getElementById('car-pagination');
+                    pagZone.innerHTML = '';
+                    for(let i=1; i<=data.totalPages; i++) {
+                        pagZone.innerHTML += `<button class="${i===data.currentPage?'active':''}" onclick="currentCarPage=${i}; loadCars();">${i}</button>`;
+                    }
+                }).catch(e => console.log(e));
+        }
+
+        function viewCarDetail(id) {
+            fetch(`${API_URL}/cars/${id}`)
+                .then(res => res.json())
+                .then(car => {
+                    const zone = document.getElementById('car-detail-zone');
+                    zone.style.display = 'block';
+                    const badgeClass = car.status === 'Còn hàng' ? 'badge-available' : 'badge-sold';
+                    document.getElementById('detail-title').innerText = `Thông số chi tiết: ${car.name}`;
+                    document.getElementById('detail-content').innerHTML = `
+                        <p style="margin-bottom: 8px;"><strong>Hãng sản xuất:</strong> ${car.brand}</p>
+                        <p style="margin-bottom: 8px;"><strong>Năm sản xuất:</strong> ${car.year}</p>
+                        <p style="margin-bottom: 8px;"><strong>Giá bán cơ sở:</strong> ${parseInt(car.price).toLocaleString()} VNĐ</p>
+                        <p><strong>Trạng thái hệ thống:</strong> <span class="badge ${badgeClass}" style="margin-left: 8px;">${car.status}</span></p>
+                    `;
+                });
+        }
+
+        function showAddCarModal() {
+            const name = prompt("Nhập tên dòng xe:"); if(!name) return;
+            const brand = prompt("Nhập thương hiệu:");
+            const price = prompt("Nhập giá niêm yết (VND):");
+            const year = prompt("Nhập năm sản xuất:");
+
+            fetch(`${API_URL}/cars`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, brand, price: Number(price), year: Number(year) })
+            }).then(() => loadCars());
+        }
+
+        function deleteCar(id) {
+            if(confirm("Xác nhận xóa dữ liệu xe này khỏi hệ thống?")) {
+                fetch(`${API_URL}/cars/${id}`, { method: 'DELETE' }).then(() => loadCars());
+            }
+        }
+
+        function loadCarSelectOptions() {
+            fetch(`${API_URL}/cars?page=1`)
+                .then(res => res.json())
+                .then(data => {
+                    const select = document.getElementById('p-car-select');
+                    select.innerHTML = '';
+                    data.cars.filter(c => c.status === 'Còn hàng').forEach(car => {
+                        select.innerHTML += `<option value="${car.id}">${car.name} - ${parseInt(car.price).toLocaleString()} VNĐ</option>`;
+                    });
+                });
+        }
+
+        function submitPurchase(e) {
+            e.preventDefault();
+            const body = {
+                customer_name: document.getElementById('p-name').value,
+                phone: document.getElementById('p-phone').value,
+                id_card: document.getElementById('p-idcard').value,
+                car_id: document.getElementById('p-car-select').value,
+                payment_method: document.getElementById('p-method').value
+            };
+
+            fetch(`${API_URL}/purchases`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+                document.getElementById('purchase-form').reset();
+                switchPage('dashboard');
+            });
+        }
+
+        function submitMaintenance(e) {
+            e.preventDefault();
+            const body = {
+                plate_number: document.getElementById('m-plate').value,
+                customer_name: document.getElementById('m-name').value,
+                phone: document.getElementById('m-phone').value,
+                service_type: document.getElementById('m-service').value,
+                appointment_time: document.getElementById('m-time').value,
+                notes: document.getElementById('m-notes').value
+            };
+
+            fetch(`${API_URL}/maintenance`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+                document.getElementById('maintenance-form').reset();
+                switchPage('dashboard');
+            });
+        }
+    </script>
+</body>
+</html>
